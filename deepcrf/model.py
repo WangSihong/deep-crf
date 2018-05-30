@@ -67,6 +67,8 @@ class DeepCRFModel():
         correct = 0
         for line in line_iter:
             parts, tags = self.transformer.tag_line(line)
+            if len(parts) == 0:
+                continue
             mtags = [tags]
             pred_ret = self.predict([parts])
             for tags, pred in zip(mtags, pred_ret):
