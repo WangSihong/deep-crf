@@ -12,7 +12,7 @@ def _load_graph(model_path):
     return graph
 
 
-class DeepCRFModel():
+class DeepCRFModel(object):
     def __init__(self, session, transformer):
         self.session = session
         self.transformer = transformer
@@ -63,6 +63,7 @@ class DeepCRFModel():
         return viterbi_sequences
     
     def eval(self, line_iter):
+        rets = []
         total = 0
         correct = 0
         for line in line_iter:
@@ -71,6 +72,7 @@ class DeepCRFModel():
                 continue
             mtags = [tags]
             pred_ret = self.predict([parts])
+            rets.append(pred_ret)
             for tags, pred in zip(mtags, pred_ret):
                 ptags = [p[1] for p in pred]
                 for to, tp in zip(tags, ptags):
@@ -78,6 +80,7 @@ class DeepCRFModel():
                     if to == tp:
                         correct += 1
         print("[Eval] total: %d , correct: %d, accuracy: %f" % (total, correct, float(correct)/float(total)) )
+        return rets
         
 
 class GraphDeepCRFModel(DeepCRFModel):
