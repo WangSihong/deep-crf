@@ -53,7 +53,7 @@ class DeepCRFTransform(Transform):
     def load_for_predict(self):
         if os.path.exists(self.vocab_path):
             count = 1
-            with open(self.vocab_path) as fp:
+            with open(self.vocab_path, 'r') as fp:
                 for line in fp:
                     line = line.strip()
                     self.id2w[count] = line
@@ -63,7 +63,7 @@ class DeepCRFTransform(Transform):
 
         if os.path.exists(self.tag_path):
             count = 0
-            with open(self.tag_path) as fp:
+            with open(self.tag_path, 'r') as fp:
                 for line in fp:
                     line = line.strip()
                     self.id2tag[count] = line
@@ -84,7 +84,7 @@ class DeepCRFTransform(Transform):
             self.load_test_data()
         
     def load_test_data(self):
-        with open(self.config.test_input_path, "r") as fp:
+        with open(self.config.test_input_path, "r", errors="ignore") as fp:
             wss = []
             tss = []
             max_len = 0
@@ -92,6 +92,9 @@ class DeepCRFTransform(Transform):
                 ws, ts = self.tag_line(line)
                 if ws is None or len(ws) == 0:
                     continue
+                if self.config.seq_cut_length > 0 and self.config.seq_cut_length < len(ws):
+                    ws = ws[:self.config.seq_cut_length]
+                    ts = ts[:self.config.seq_cut_length]
                 wss.append(ws)
                 tss.append(ts)
                 if len(ws) > max_len:
@@ -103,11 +106,12 @@ class DeepCRFTransform(Transform):
             for ws, ts in zip(wss, tss):
                 tags = [self.tag2id[t] for t in ts]
                 words = [self.w2id.get(w, 0) for w in ws]
+                test_data_leng.append(len(tags))
+
                 tags = self.pad(tags, max_len, 0)
                 words = self.pad(words, max_len, 0)
                 test_data_tags.append(tags)
                 test_data_text.append(words)
-                test_data_leng.append(len(tags))
             self.test_tag_data = np.array(test_data_tags)
             self.test_text_data = np.array(test_data_text)
             self.test_lengths = np.array(test_data_leng)
@@ -182,6 +186,9 @@ class DeepCRFTransform(Transform):
         _tags = self.sparse_to_dense(_tag_sparse.indices, _tag_sparse.dense_shape, _tag_sparse.values, -1)
         _texts = self.sparse_to_dense(_text_sparse.indices, _text_sparse.dense_shape, _text_sparse.values, -1)
 
+        if self.config.seq_cut_length > 0:
+            _seq_lens[np.where(_seq_lens > self.config.seq_cut_length)] = self.config.seq_cut_length
+
         max_len = max(_seq_lens)
 
         tags = []
@@ -198,8 +205,13 @@ class DeepCRFTransform(Transform):
     def pad(self, ndarr, pad_len, value=0):
         arr = ndarr[:self.nparray_index(ndarr)]
         fill_size = pad_len - len(arr)
-        pad_fill = [value] * fill_size
-        return np.append(arr, pad_fill)
+        if fill_size > 0:
+            pad_fill = [value] * fill_size
+            return np.append(arr, pad_fill)
+        elif fill_size < 0:
+            return arr[:pad_len]
+        else:
+            return arr
 
     def clean_data(self):
         if os.path.exists(self.data_path):
@@ -250,7 +262,7 @@ class DeepCRFTransform(Transform):
 
         counter = 0
         vecs = [0.0] * w2v_size
-        with open(self.train_input_path, "r") as fp:
+        with open(self.train_input_path, "r", errors="ignore") as fp:
             for line in fp:
                 line = line.strip()
                 ws, ts = self.tag_line(line)

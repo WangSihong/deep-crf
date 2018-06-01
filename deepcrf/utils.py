@@ -10,7 +10,7 @@ class CorpusIterator(object):
 
     def __iter__(self):
         for fn in self.files:
-            with open(fn, "r") as fp:
+            with open(fn, "r", errors="ignore") as fp:
                 for line in fp:
                     rets = self.analysis_line(line) 
                     if rets is not None and len(rets) > 0:
