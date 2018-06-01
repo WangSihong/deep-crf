@@ -252,16 +252,16 @@ class DeepCRFTransform(Transform):
         tag_fp = open(self.tag_path, "w")
 
         w2v_model = word2vec.Word2Vec.load(self.w2v_model_path)
-        w2v_size = w2v_model.layer1_size
+        w2v_layer_size = w2v_model.layer1_size
 
         def get_vec(word):
             w2v_model.init_sims()
             if word in w2v_model.wv.vocab:
                 return w2v_model.wv.word_vec(word, use_norm=True)
-            return np.array([0.0] * w2v_size)
+            return np.array([0.0] * w2v_layer_size)
 
         counter = 0
-        vecs = [0.0] * w2v_size
+        vecs = [0.0] * w2v_layer_size
         with open(self.train_input_path, "r", errors="ignore") as fp:
             for line in fp:
                 line = line.strip()
@@ -303,7 +303,7 @@ class DeepCRFTransform(Transform):
 
         self.vocab_size = word_count
         self.num_tags = tag_count
-        self.word_vector = np.array(vecs).reshape([word_count, w2v_size])
+        self.word_vector = np.array(vecs).reshape([word_count, w2v_layer_size])
         np.save(self.word_vector_path, self.word_vector)
 
         vocab_fp.close()
