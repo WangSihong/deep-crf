@@ -19,7 +19,7 @@ def copy_file(src, dst):
     fp.close()
 
 
-def train(config, TransformClass, need_transform=False, rebuild_word2vec=False):
+def train(config, _transform_class, need_transform=False, rebuild_word2vec=False, restore_model=False):
     with tf.Graph().as_default():
         session_conf = tf.ConfigProto(
           allow_soft_placement=config.allow_soft_placement,
@@ -27,7 +27,7 @@ def train(config, TransformClass, need_transform=False, rebuild_word2vec=False):
         session_conf.gpu_options.allow_growth = True
         sess = tf.Session(config=session_conf)
         with sess.as_default():
-            transformer = TransformClass(config)
+            transformer = _transform_class(config)
             if need_transform:
                 transformer.transform(rebuild_word2vec)
             else:
@@ -53,13 +53,20 @@ def train(config, TransformClass, need_transform=False, rebuild_word2vec=False):
             grad_summaries_merged = tf.summary.merge(grad_summaries)
             """
 
+            saver = tf.train.Saver(max_to_keep=config.num_checkpoints)
+
             # Output directory for models and summaries
             out_dir = os.path.abspath(os.path.join(os.path.curdir, "runs"))
-            if os.path.exists(out_dir + "/checkpoints"):
-                shutil.rmtree(out_dir + "/checkpoints")
-            if os.path.exists(out_dir + "/summaries"):
-                shutil.rmtree(out_dir + "/summaries")
-            print("Writing to {}\n".format(out_dir))
+            checkpoint_dir = os.path.abspath(os.path.join(out_dir, "checkpoints"))
+            if restore_model:
+                saver.restore(sess, checkpoint_dir)
+                print("Restore from {}\n".format(out_dir))
+            else:
+                if os.path.exists(out_dir + "/checkpoints"):
+                    shutil.rmtree(out_dir + "/checkpoints")
+                if os.path.exists(out_dir + "/summaries"):
+                    shutil.rmtree(out_dir + "/summaries")
+                print("Writing to {}\n".format(out_dir))
 
             # Summaries for loss and acc
             loss_summary = tf.summary.scalar("loss", model.loss)
@@ -80,18 +87,16 @@ def train(config, TransformClass, need_transform=False, rebuild_word2vec=False):
             dev_summary_writer = tf.summary.FileWriter(dev_summary_dir, sess.graph)
 
             # Checkpoint directory. Tensorflow assumes this directory already exists so we need to create it
-            checkpoint_dir = os.path.abspath(os.path.join(out_dir, "checkpoints"))
             checkpoint_prefix = os.path.join(checkpoint_dir, "model")
             if not os.path.exists(checkpoint_dir):
                 os.makedirs(checkpoint_dir)
-            saver = tf.train.Saver(tf.global_variables(), max_to_keep=config.num_checkpoints)
 
             checkpoint_index_dev = os.path.join(out_dir, "summaries", "dev", "checkpoint")
             checkpoint_index = os.path.join(checkpoint_dir, "checkpoint")
 
-            init_op = tf.group(tf.global_variables_initializer(), tf.local_variables_initializer())
-            sess.run(init_op)
-
+            if not restore_model:
+                init_op = tf.group(tf.global_variables_initializer(), tf.local_variables_initializer())
+                sess.run(init_op)
 
             def train_step(doc_batch, labels_batch, seq_lens):
                 feed_dict = {
