@@ -2,7 +2,6 @@
 
 import tensorflow as tf
 import os
-import datetime
 import shutil
 from . import utils
 from .model import BiLSTM_CRF
@@ -119,8 +118,7 @@ def train(config, _transform_class, need_transform=False, rebuild_word2vec=False
                                   model.transition_params], feed_dict)
                     acc = model.acc(logits, transition_params, seq_lens, labels_batch)
 
-                time_str = datetime.datetime.now().isoformat()
-                logging.info("{}: step {}, loss {:g}, acc {:g}".format(time_str, step, loss, acc))
+                logging.info("step {}, loss {:g}, acc {:g}".format(step, loss, acc))
                 train_summary_writer.add_summary(summaries, step)
 
 
@@ -142,8 +140,7 @@ def train(config, _transform_class, need_transform=False, rebuild_word2vec=False
                                   model.logits, model.transition_params], feed_dict)
                     acc = model.acc(logits, transition_params, seq_lens, labels_batch)
 
-                time_str = datetime.datetime.now().isoformat()
-                logging.info("{}: step {}, loss {:g}, acc {:g}".format(time_str, step, loss, acc))
+                logging.info("step {}, loss {:g}, acc {:g}".format(step, loss, acc))
                 if writer:
                     writer.add_summary(summaries, step)
 
