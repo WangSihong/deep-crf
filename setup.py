@@ -21,6 +21,7 @@ setup(
         'console_scripts': [
             'deepcrf_learn = deepcrf.deepcrf_learn:main',
             'deepcrf_eval = deepcrf.deepcrf_eval:main',
+            'deepcrf_save = deepcrf.deepcrf_save:main',
         ]
     },
     classifiers=[

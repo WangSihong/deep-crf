@@ -15,7 +15,7 @@ def main():
     need_transform = True
     need_build_word2vec = True
     try:
-        opts, args = getopt.getopt(sys.argv[1:],"ht:e:c:m:f:w:",["train=","test=","config=","model=","transform=","word2vec"])
+        opts, args = getopt.getopt(sys.argv[1:],"ht:e:c:m:f:w:",["train=","test=","config=","model=","transform=","word2vec="])
     except getopt.getopt.GetoptError:
         print('deepcrf_learn -t <trainfile> -e <testfile> -c <configfile> -m <model save path> [-f <do transform> -w <build word2vec>]')
         sys.exit(2)

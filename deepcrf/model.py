@@ -209,7 +209,7 @@ class BiLSTM_CRF(DeepCRFModel):
             save_graph_value_scopes.append(self.viterbi_score.name.split(":")[0])
         else:
             save_graph_value_scopes.append(self.transition_params.name.split(":")[0])
-            
+         
         save_graph_value_scopes.append("logits/prob")
         save_graph_value_scopes.append("logits/logits")
         print(save_graph_value_scopes)
