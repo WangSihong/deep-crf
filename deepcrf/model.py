@@ -1,6 +1,7 @@
 import tensorflow as tf
 from . import utils
 import numpy as np
+import logging
 
 
 def _load_graph(model_path):
@@ -79,7 +80,7 @@ class DeepCRFModel(object):
                     total += 1
                     if to == tp:
                         correct += 1
-        print("[Eval] total: %d , correct: %d, accuracy: %f" % (total, correct, float(correct)/float(total)) )
+        logging.info("[Eval] total: %d , correct: %d, accuracy: %f" % (total, correct, float(correct)/float(total)) )
         return rets
         
 
@@ -212,7 +213,7 @@ class BiLSTM_CRF(DeepCRFModel):
          
         save_graph_value_scopes.append("logits/prob")
         save_graph_value_scopes.append("logits/logits")
-        print(save_graph_value_scopes)
+        logging.info(save_graph_value_scopes)
         graph = tf.graph_util.convert_variables_to_constants(self.session, self.session.graph_def, save_graph_value_scopes)
         with tf.gfile.GFile(output_path, "wb") as f:  
             f.write(graph.SerializeToString())

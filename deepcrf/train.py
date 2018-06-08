@@ -6,6 +6,7 @@ import datetime
 import shutil
 from . import utils
 from .model import BiLSTM_CRF
+import logging
 
 
 def copy_file(src, dst):
@@ -119,7 +120,7 @@ def train(config, _transform_class, need_transform=False, rebuild_word2vec=False
                     acc = model.acc(logits, transition_params, seq_lens, labels_batch)
 
                 time_str = datetime.datetime.now().isoformat()
-                print("{}: step {}, loss {:g}, acc {:g}".format(time_str, step, loss, acc))
+                logging.info("{}: step {}, loss {:g}, acc {:g}".format(time_str, step, loss, acc))
                 train_summary_writer.add_summary(summaries, step)
 
 
@@ -142,7 +143,7 @@ def train(config, _transform_class, need_transform=False, rebuild_word2vec=False
                     acc = model.acc(logits, transition_params, seq_lens, labels_batch)
 
                 time_str = datetime.datetime.now().isoformat()
-                print("{}: step {}, loss {:g}, acc {:g}".format(time_str, step, loss, acc))
+                logging.info("{}: step {}, loss {:g}, acc {:g}".format(time_str, step, loss, acc))
                 if writer:
                     writer.add_summary(summaries, step)
 
@@ -155,15 +156,15 @@ def train(config, _transform_class, need_transform=False, rebuild_word2vec=False
                     current_step = tf.train.global_step(sess, global_step)
                     if current_step % config.evaluate_every == 0:
                         labels_batch, doc_batch, seq_lens = transformer.get_test_data()
-                        print("\nEvaluation:")
+                        logging.info("\nEvaluation:")
                         dev_step(doc_batch, labels_batch, seq_lens, writer=dev_summary_writer)
-                        print("")
+                        logging.info("")
                     if current_step % config.checkpoint_every == 0:
                         path = saver.save(sess, checkpoint_prefix, global_step=current_step)
                         copy_file(checkpoint_index, checkpoint_index_dev)
-                        print("Saved model checkpoint to {}\n".format(path))
+                        logging.info("Saved model checkpoint to {}\n".format(path))
             except tf.errors.OutOfRangeError:
-                print ('Done training -- epoch limit reached')
+                logging.info ('Done training -- epoch limit reached')
 
             coord.request_stop()
             coord.join(threads)

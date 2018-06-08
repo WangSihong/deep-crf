@@ -36,7 +36,7 @@ class Transform(object):
         self.corpus_iter = corpus_iter
 
     def build_word2vec(self):
-        print("Build word2vec...")
+        logging.info("Build word2vec...")
         model = Word2Vec(self.corpus_iter,
                          size=self.config.embedding_size,
                          alpha=self.config.alpha,
@@ -115,7 +115,7 @@ class Transform(object):
         os.mkdir(self.data_path)
 
     def transform(self, rebuild_word2vec=False):
-        print("Transform data...")
+        logging.info("Transform data...")
         self.clean_data()
 
         if self.corpus_iter is not None and (rebuild_word2vec or not os.path.exists(self.word_vector_path)):
@@ -285,7 +285,7 @@ class DeepCRFTransform(Transform):
         return self.test_tag_data, self.test_text_data, self.test_lengths
 
     def transform_impl(self):
-        print("Build tfrecord file...")
+        logging.info("Build tfrecord file...")
         writer = tf.python_io.TFRecordWriter(self.tfrecord_path)
         word_count = 1  # 0 is UNK
         tag_count = 0
@@ -305,7 +305,7 @@ class DeepCRFTransform(Transform):
 
                 counter += 1
                 if counter % 10000 == 0:
-                    print("Transform %d" % (counter))
+                    logging.info("Transform %d" % (counter))
                     
                 if ws is None or len(ws) == 0:
                     continue
