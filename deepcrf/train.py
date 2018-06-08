@@ -58,15 +58,16 @@ def train(config, _transform_class, need_transform=False, rebuild_word2vec=False
             # Output directory for models and summaries
             out_dir = os.path.abspath(os.path.join(os.path.curdir, "runs"))
             checkpoint_dir = os.path.abspath(os.path.join(out_dir, "checkpoints"))
+            ckpt = tf.train.get_checkpoint_state(checkpoint_dir)
             if restore_model:
-                saver.restore(sess, checkpoint_dir)
-                print("Restore from {}\n".format(out_dir))
+                init_op = tf.group(tf.global_variables_initializer(), tf.local_variables_initializer())
+                sess.run(init_op)
+                saver.restore(sess, ckpt.model_checkpoint_path)
             else:
                 if os.path.exists(out_dir + "/checkpoints"):
                     shutil.rmtree(out_dir + "/checkpoints")
                 if os.path.exists(out_dir + "/summaries"):
                     shutil.rmtree(out_dir + "/summaries")
-                print("Writing to {}\n".format(out_dir))
 
             # Summaries for loss and acc
             loss_summary = tf.summary.scalar("loss", model.loss)
