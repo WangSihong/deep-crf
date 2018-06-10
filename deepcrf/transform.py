@@ -31,7 +31,7 @@ class Transform(object):
 
         # word2vec
         self.word_vector = np.array([])
-        self.word_vector_path = self.data_path + "/word_vector.npy"
+        self.word_vector_path = self.temp_path + "/word2vec/word_vector.npy"
         self.w2v_model_path = self.temp_path + "/word2vec/model.bin"
         self.corpus_iter = corpus_iter
 
@@ -97,6 +97,7 @@ class Transform(object):
                 self.w2id[line] = count
                 count += 1
         self.vocab_size = count
+        logging.info("Load vocab, size %d" % (self.vocab_size))
 
     def pad(self, ndarr, pad_len, value=0):
         arr = ndarr[:self.nparray_index(ndarr)]
@@ -114,9 +115,13 @@ class Transform(object):
             shutil.rmtree(self.data_path)
         os.mkdir(self.data_path)
 
+    def load_per_data(self):
+        self.load_vocab()
+        self.load_custom_data()
+
     def transform(self, rebuild_word2vec=False):
         logging.info("Transform data...")
-        self.clean_data()
+        self.load_per_data()
 
         if self.corpus_iter is not None and (rebuild_word2vec or not os.path.exists(self.word_vector_path)):
             if os.path.exists(self.temp_path + "/word2vec"):
@@ -126,12 +131,8 @@ class Transform(object):
 
         self.transform_impl()
 
-    def load_for_predict(self):
-        self.load_vocab()
-        self.load_custom_data()
-
     def load(self):
-        self.load_for_predict()
+        self.load_per_data()
 
         if os.path.exists(self.word_vector_path):
             self.word_vector = np.load(self.word_vector_path)
@@ -184,18 +185,22 @@ class DeepCRFTransform(Transform):
         self.num_tags = 0
 
     def load_custom_data(self):
-        if os.path.exists(self.tag_path):
-            count = 0
-            with open(self.tag_path, 'r') as fp:
-                for line in fp:
-                    line = line.strip()
-                    self.id2tag[count] = line
-                    self.tag2id[line] = count
-                    count += 1
-            self.num_tags = count
+        if not os.path.exists(self.tag_path):
+            return
+        
+        count = 0
+        with open(self.tag_path, 'r') as fp:
+            for line in fp:
+                line = line.strip()
+                self.id2tag[count] = line
+                self.tag2id[line] = count
+                count += 1
+        self.num_tags = count
+        logging.info("Load tags data, size %d" % (size.num_tags))
 
     def load_test_data(self):
         with open(self.test_input_path, "r", errors="ignore") as fp:
+            logging.info("Load test data %s" % (self.test_input_path))
             wss = []
             tss = []
             max_len = 0
@@ -226,8 +231,10 @@ class DeepCRFTransform(Transform):
             self.test_tag_data = np.array(test_data_tags)
             self.test_text_data = np.array(test_data_text)
             self.test_lengths = np.array(test_data_leng)
+            logging.info("Load test data, size %d" % (self.test_tag_data.shape[0]))
          
     def load_tfrecords_data(self):
+        logging.info("Load tfrecord data %s", self.tfrecord_path)
         filename_queue = tf.train.string_input_producer([self.tfrecord_path], num_epochs=self.config.epoch)
         reader = tf.TFRecordReader()
         _, serialized_example = reader.read(filename_queue)
@@ -290,8 +297,8 @@ class DeepCRFTransform(Transform):
         word_count = 1  # 0 is UNK
         tag_count = 0
 
-        vocab_fp = open(self.vocab_path, "w")
-        tag_fp = open(self.tag_path, "w")
+        vocab_fp = open(self.vocab_path, "a")
+        tag_fp = open(self.tag_path, "a")
 
         w2v_model = word2vec.Word2Vec.load(self.w2v_model_path)
         w2v_layer_size = w2v_model.layer1_size
