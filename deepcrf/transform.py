@@ -123,7 +123,7 @@ class Transform(object):
         logging.info("Transform data...")
         self.load_pre_data()
 
-        if self.corpus_iter is not None and (rebuild_word2vec or not os.path.exists(self.word_vector_path)):
+        if self.corpus_iter is not None and (rebuild_word2vec or not os.path.exists(self.w2v_model_path)):
             if os.path.exists(self.temp_path + "/word2vec"):
                 shutil.rmtree(self.temp_path + "/word2vec")
             os.mkdir(self.temp_path + "/word2vec")
@@ -293,6 +293,10 @@ class DeepCRFTransform(Transform):
 
     def transform_impl(self):
         logging.info("Build tfrecord file...")
+        
+        if not os.path.exists(self.data_path):
+            os.mkdir(self.data_path)
+            
         writer = tf.python_io.TFRecordWriter(self.tfrecord_path)
         word_count = 1  # 0 is UNK
         tag_count = 0
