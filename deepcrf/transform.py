@@ -115,13 +115,13 @@ class Transform(object):
             shutil.rmtree(self.data_path)
         os.mkdir(self.data_path)
 
-    def load_per_data(self):
+    def load_pre_data(self):
         self.load_vocab()
         self.load_custom_data()
 
     def transform(self, rebuild_word2vec=False):
         logging.info("Transform data...")
-        self.load_per_data()
+        self.load_pre_data()
 
         if self.corpus_iter is not None and (rebuild_word2vec or not os.path.exists(self.word_vector_path)):
             if os.path.exists(self.temp_path + "/word2vec"):
@@ -132,7 +132,7 @@ class Transform(object):
         self.transform_impl()
 
     def load(self):
-        self.load_per_data()
+        self.load_pre_data()
 
         if os.path.exists(self.word_vector_path):
             self.word_vector = np.load(self.word_vector_path)
@@ -196,7 +196,7 @@ class DeepCRFTransform(Transform):
                 self.tag2id[line] = count
                 count += 1
         self.num_tags = count
-        logging.info("Load tags data, size %d" % (size.num_tags))
+        logging.info("Load tags data, size %d" % (self.num_tags))
 
     def load_test_data(self):
         with open(self.test_input_path, "r", errors="ignore") as fp:

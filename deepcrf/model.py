@@ -87,7 +87,7 @@ class DeepCRFModel(object):
 class GraphDeepCRFModel(DeepCRFModel):
     def __init__(self, model_path, config, TransformClass):
         super(GraphDeepCRFModel, self).__init__(tf.Session(graph=_load_graph(model_path)), TransformClass(config))
-        self.transformer.load_for_predict()
+        self.transformer.load_pre_data()
         self.session.as_default()
         self.input = self.session.graph.get_tensor_by_name("input:0")
         self.sequence_lengths = self.session.graph.get_tensor_by_name("sequence_lengths:0")
