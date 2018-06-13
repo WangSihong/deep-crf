@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(  
     name = "deep-crf",
-    version = "1.5.1",
+    version = "1.5.2",
     keywords = ("lstm-crf", "crf"),
     description = "Sequence label tool base on Bi-LSTM-CRF mode.",
     long_description = "Sequence label tool base on Bi-LSTM-CRF mode.",
